@@ -233,6 +233,7 @@ Note: This documnt contains some deliberat typos like "documnt" and "deliberat" 
   const [author, setAuthor] = useState('Dain Russell');
   const [tags, setTags] = useState('Marketing, Strategy, Q3');
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+  const [isLoading, setIsLoading] = useState(true);
 
   // Undo/Redo History
   const [undoStack, setUndoStack] = useState<string[]>([]);
@@ -307,6 +308,7 @@ Note: This documnt contains some deliberat typos like "documnt" and "deliberat" 
     newSocket.on('connect', () => {
       console.log('Connected to WebSocket server');
       newSocket.emit('join-document', doc.id);
+      setTimeout(() => setIsLoading(false), 800); // Simulate initial load
     });
 
     newSocket.on('document-update', (data: any) => {
@@ -420,7 +422,7 @@ Note: This documnt contains some deliberat typos like "documnt" and "deliberat" 
                 ) : (
                   <>
                     <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                    <span className="text-emerald-600">Saved</span>
+                    <span className="text-emerald-600 font-bold">Saved ✓</span>
                   </>
                 )}
               </div>
@@ -488,6 +490,7 @@ Note: This documnt contains some deliberat typos like "documnt" and "deliberat" 
               className="border-r border-slate-200 bg-white flex flex-col shrink-0 overflow-hidden hidden lg:flex"
             >
               <BranchPanel 
+                activeBranchName="main"
                 onCompare={() => setShowCompareView(true)} 
                 onMerge={(branch) => {
                   setMergeBranch({
@@ -503,7 +506,14 @@ Note: This documnt contains some deliberat typos like "documnt" and "deliberat" 
 
         {/* Main Editor Area */}
         <main className="flex-1 overflow-y-auto bg-slate-50/30 p-4 md:p-10 relative">
-          <div className="max-w-3xl mx-auto mb-6 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center h-full space-y-4">
+              <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+              <p className="text-slate-500 font-medium animate-pulse">Loading document...</p>
+            </div>
+          ) : (
+            <>
+              <div className="max-w-3xl mx-auto mb-6 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Document Title</label>
@@ -594,6 +604,8 @@ Note: This documnt contains some deliberat typos like "documnt" and "deliberat" 
                 Ignore
               </button>
             </div>
+          )}
+            </>
           )}
         </main>
 

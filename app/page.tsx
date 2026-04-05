@@ -1,31 +1,43 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Dashboard from '@/components/Dashboard';
 import DocumentEditor from '@/components/DocumentEditor';
 import { AnimatePresence, motion } from 'motion/react';
 
 export default function Page() {
   const [view, setView] = useState<'dashboard' | 'editor'>('dashboard');
-  const [documents, setDocuments] = useState([
-    {
-      id: "doc1",
-      title: "Q2 Campaign",
-      branches: [
-        {
-          name: "main",
-          versions: [
-            {
-              id: "v1",
-              content: "Initial draft",
-              timestamp: 1712351643000,
-              author: "You"
-            }
-          ]
-        }
-      ]
+  
+  const [documents, setDocuments] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('draftline_docs');
+      if (saved) return JSON.parse(saved);
     }
-  ]);
+    return [
+      {
+        id: "doc1",
+        title: "Q2 Campaign",
+        branches: [
+          {
+            name: "main",
+            versions: [
+              {
+                id: "v1",
+                content: "Initial draft",
+                timestamp: 1712351643000,
+                author: "You"
+              }
+            ]
+          }
+        ]
+      }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('draftline_docs', JSON.stringify(documents));
+  }, [documents]);
+
   const [activeDoc, setActiveDoc] = useState<any | null>(null);
 
   const handleOpenDocument = (doc: any) => {
