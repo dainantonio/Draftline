@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from 'motion/react';
 export default function Page() {
   const [view, setView] = useState<'dashboard' | 'editor'>('dashboard');
   
-  const [documents, setDocuments] = useState(() => {
+  const [documents, setDocuments] = useState<any[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('draftline_docs');
       if (saved) return JSON.parse(saved);
@@ -50,6 +50,40 @@ export default function Page() {
     setActiveDoc(null);
   };
 
+  const handleSaveDocument = (docId: string, data: any) => {
+    setDocuments(prevDocs => 
+      prevDocs.map(doc => {
+        if (doc.id !== docId) return doc;
+        
+        // Update the main branch's latest version
+        const updatedBranches = doc.branches.map((branch: any) => {
+          if (branch.name === 'main') {
+            const newVersion = {
+              id: `v${Date.now()}`,
+              content: data.content,
+              timestamp: Date.now(),
+              author: data.author || 'You',
+              tag: data.versionTag || `v${branch.versions.length + 1}.0`
+            };
+            return {
+              ...branch,
+              versions: [...branch.versions, newVersion]
+            };
+          }
+          return branch;
+        });
+
+        const updatedDoc = {
+          ...doc,
+          title: data.title,
+          branches: updatedBranches
+        };
+        setActiveDoc(updatedDoc);
+        return updatedDoc;
+      })
+    );
+  };
+
   return (
     <main className="min-h-screen">
       <AnimatePresence mode="wait">
@@ -77,6 +111,7 @@ export default function Page() {
             <DocumentEditor 
               doc={activeDoc} 
               goBack={handleBackToDashboard} 
+              onSave={handleSaveDocument}
             />
           </motion.div>
         )}

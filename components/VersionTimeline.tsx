@@ -6,67 +6,81 @@ import { History, Clock, User, ChevronRight, RotateCcw, Eye, CheckCircle2 } from
 interface Version {
   id: string;
   tag: string;
-  message: string;
-  time: string;
-  user: string;
-  type: string;
   content: string;
+  timestamp: number;
+  author: string;
+  message?: string;
+  type?: string;
 }
 
 interface VersionTimelineProps {
+  versions?: Version[];
   onCompare?: (v1: Version, v2: Version) => void;
+  onRestore?: (v: Version) => void;
+  onPreview?: (v: Version) => void;
 }
 
-export default function VersionTimeline({ onCompare }: VersionTimelineProps) {
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+const DEFAULT_VERSIONS: Version[] = [
+  { 
+    id: '1', 
+    tag: 'v2.4', 
+    message: 'Updated budget allocation', 
+    timestamp: 1712351643000, 
+    author: 'Dain R.', 
+    type: 'major',
+    content: '# Q3 Marketing Strategy\n\n## Executive Summary\nOur goal for Q3 is to increase brand awareness by 25% across digital channels while maintaining a CAC below $45. We will focus on high-intent search terms and strategic influencer partnerships.\n\n## Key Objectives\n1. **Expand Social Reach**: Launch 3 major campaigns on LinkedIn and Twitter.\n2. **Content Engine**: Produce 12 high-quality whitepapers and 24 blog posts.\n3. **SEO Optimization**: Improve ranking for top 50 industry keywords.\n\n## Budget Allocation\n- Paid Search: 45%\n- Content Production: 25%\n- Influencer Marketing: 20%\n- Events & Webinars: 10%'
+  },
+  { 
+    id: '2', 
+    tag: 'v2.3', 
+    message: 'Fixed typos in summary', 
+    timestamp: 1712349843000, 
+    author: 'Sam C.', 
+    type: 'minor',
+    content: '# Q3 Marketing Strategy\n\n## Executive Summary\nOur goal for Q3 is to increase brand awareness by 25% across digital channels while maintaining a CAC below $45. We will focus on high-intent search terms and strategic influencer partnerships.\n\n## Key Objectives\n1. **Expand Social Reach**: Launch 3 major campaigns on LinkedIn and Twitter.\n2. **Content Engine**: Produce 12 high-quality whitepapers and 24 blog posts.\n3. **SEO Optimization**: Improve ranking for top 50 industry keywords.\n\n## Budget Allocation\n- Paid Search: 40%\n- Content Production: 30%\n- Influencer Marketing: 20%\n- Events & Webinars: 10%'
+  },
+  { 
+    id: '3', 
+    tag: 'v2.2', 
+    message: 'Added SEO section', 
+    timestamp: 1712345643000, 
+    author: 'Alex R.', 
+    type: 'major',
+    content: '# Q3 Marketing Strategy\n\n## Executive Summary\nOur goal for Q3 is to increase brand awareness by 25% across digital channels while maintaining a CAC below $45.\n\n## Key Objectives\n1. **Expand Social Reach**: Launch 3 major campaigns on LinkedIn and Twitter.\n2. **Content Engine**: Produce 12 high-quality whitepapers and 24 blog posts.\n3. **SEO Optimization**: Improve ranking for top 50 industry keywords.'
+  },
+  { 
+    id: '4', 
+    tag: 'v2.1', 
+    message: 'Initial draft structure', 
+    timestamp: 1712265243000, 
+    author: 'Dain R.', 
+    type: 'minor',
+    content: '# Q3 Marketing Strategy\n\n## Executive Summary\nOur goal for Q3 is to increase brand awareness by 25% across digital channels while maintaining a CAC below $45.\n\n## Key Objectives\n1. **Expand Social Reach**: Launch 3 major campaigns on LinkedIn and Twitter.'
+  },
+  { 
+    id: '5', 
+    tag: 'v1.0', 
+    message: 'Project kickoff baseline', 
+    timestamp: 1712092443000, 
+    author: 'Jordan T.', 
+    type: 'baseline',
+    content: '# Q3 Marketing Strategy\n\nInitial project kickoff.'
+  },
+];
 
-  const versions: Version[] = [
-    { 
-      id: '1', 
-      tag: 'v2.4', 
-      message: 'Updated budget allocation', 
-      time: '10m ago', 
-      user: 'Dain R.', 
-      type: 'major',
-      content: '# Q3 Marketing Strategy\n\n## Executive Summary\nOur goal for Q3 is to increase brand awareness by 25% across digital channels while maintaining a CAC below $45. We will focus on high-intent search terms and strategic influencer partnerships.\n\n## Key Objectives\n1. **Expand Social Reach**: Launch 3 major campaigns on LinkedIn and Twitter.\n2. **Content Engine**: Produce 12 high-quality whitepapers and 24 blog posts.\n3. **SEO Optimization**: Improve ranking for top 50 industry keywords.\n\n## Budget Allocation\n- Paid Search: 45%\n- Content Production: 25%\n- Influencer Marketing: 20%\n- Events & Webinars: 10%'
-    },
-    { 
-      id: '2', 
-      tag: 'v2.3', 
-      message: 'Fixed typos in summary', 
-      time: '45m ago', 
-      user: 'Sam C.', 
-      type: 'minor',
-      content: '# Q3 Marketing Strategy\n\n## Executive Summary\nOur goal for Q3 is to increase brand awareness by 25% across digital channels while maintaining a CAC below $45. We will focus on high-intent search terms and strategic influencer partnerships.\n\n## Key Objectives\n1. **Expand Social Reach**: Launch 3 major campaigns on LinkedIn and Twitter.\n2. **Content Engine**: Produce 12 high-quality whitepapers and 24 blog posts.\n3. **SEO Optimization**: Improve ranking for top 50 industry keywords.\n\n## Budget Allocation\n- Paid Search: 40%\n- Content Production: 30%\n- Influencer Marketing: 20%\n- Events & Webinars: 10%'
-    },
-    { 
-      id: '3', 
-      tag: 'v2.2', 
-      message: 'Added SEO section', 
-      time: '2h ago', 
-      user: 'Alex R.', 
-      type: 'major',
-      content: '# Q3 Marketing Strategy\n\n## Executive Summary\nOur goal for Q3 is to increase brand awareness by 25% across digital channels while maintaining a CAC below $45.\n\n## Key Objectives\n1. **Expand Social Reach**: Launch 3 major campaigns on LinkedIn and Twitter.\n2. **Content Engine**: Produce 12 high-quality whitepapers and 24 blog posts.\n3. **SEO Optimization**: Improve ranking for top 50 industry keywords.'
-    },
-    { 
-      id: '4', 
-      tag: 'v2.1', 
-      message: 'Initial draft structure', 
-      time: 'Yesterday', 
-      user: 'Dain R.', 
-      type: 'minor',
-      content: '# Q3 Marketing Strategy\n\n## Executive Summary\nOur goal for Q3 is to increase brand awareness by 25% across digital channels while maintaining a CAC below $45.\n\n## Key Objectives\n1. **Expand Social Reach**: Launch 3 major campaigns on LinkedIn and Twitter.'
-    },
-    { 
-      id: '5', 
-      tag: 'v1.0', 
-      message: 'Project kickoff baseline', 
-      time: '3 days ago', 
-      user: 'Jordan T.', 
-      type: 'baseline',
-      content: '# Q3 Marketing Strategy\n\nInitial project kickoff.'
-    },
-  ];
+export default function VersionTimeline({ versions: propVersions, onCompare, onRestore, onPreview }: VersionTimelineProps) {
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [now] = useState(() => Date.now());
+
+  const versions = propVersions || DEFAULT_VERSIONS;
+
+  const formatTime = (timestamp: number) => {
+    const diff = now - timestamp;
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return `${Math.floor(diff / 86400000)}d ago`;
+  };
 
   const handleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -126,28 +140,28 @@ export default function VersionTimeline({ onCompare }: VersionTimelineProps) {
                 <div className={`flex flex-col p-2 rounded-lg transition-colors ${isSelected ? 'bg-indigo-50/50 ring-1 ring-indigo-100' : 'hover:bg-slate-50'}`}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-bold text-slate-900">{v.tag}</span>
-                    <span className="text-[10px] text-slate-400 font-medium">{v.time}</span>
+                    <span className="text-[10px] text-slate-400 font-medium">{v.timestamp ? formatTime(v.timestamp) : 'Unknown'}</span>
                   </div>
-                  <p className="text-sm text-slate-600 mb-2 leading-snug">{v.message}</p>
+                  <p className="text-sm text-slate-600 mb-2 leading-snug">{v.message || 'Saved version'}</p>
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
                       <div className="w-4 h-4 rounded-full bg-slate-100 flex items-center justify-center">
                         <User className="w-2.5 h-2.5" />
                       </div>
-                      <span>{v.user}</span>
+                      <span>{v.author || 'Unknown'}</span>
                     </div>
                     
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
-                        onClick={(e) => { e.stopPropagation(); }}
+                        onClick={(e) => { e.stopPropagation(); onPreview?.(v); }}
                         className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors" 
                         title="Preview"
                       >
                         <Eye className="w-3.5 h-3.5" />
                       </button>
                       <button 
-                        onClick={(e) => { e.stopPropagation(); }}
+                        onClick={(e) => { e.stopPropagation(); onRestore?.(v); }}
                         className="p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors" 
                         title="Restore"
                       >

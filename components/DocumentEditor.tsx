@@ -202,12 +202,15 @@ interface DocumentEditorProps {
     branches?: any[];
   };
   goBack: () => void;
+  onSave?: (docId: string, data: { content: string; title: string; author: string; tags: string; versionTag?: string }) => void;
 }
 
-export default function DocumentEditor({ doc, goBack }: DocumentEditorProps) {
+export default function DocumentEditor({ doc, goBack, onSave }: DocumentEditorProps) {
   const [activePanel, setActivePanel] = useState<'none' | 'branches' | 'history' | 'audit'>('none');
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
+  
+  const [versionTag, setVersionTag] = useState('');
   
   const [content, setContent] = useState(doc?.branches?.[0]?.versions?.[0]?.content || `
 # Q3 Marketing Strategy
@@ -394,90 +397,41 @@ Note: This documnt contains some deliberat typos like "documnt" and "deliberat" 
   return (
     <div className="flex flex-col h-screen bg-white overflow-hidden relative">
       {/* Editor Header */}
-      <header className="h-14 border-b border-slate-200 px-4 flex items-center justify-between bg-white shrink-0 z-20">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={goBack}
-            className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <div className="h-6 w-px bg-slate-200 mx-1" />
-          <div>
-            <h2 className="font-semibold text-slate-900 text-sm md:text-base truncate max-w-[200px] md:max-w-md">
-              {title}
-            </h2>
-            <div className="flex items-center gap-2 text-[10px] text-slate-400 uppercase font-bold tracking-wider">
-              <div className="flex items-center gap-1 text-green-600">
-                <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse" />
-                <span>{activeUsers} active</span>
-              </div>
-              <span className="w-1 h-1 bg-slate-300 rounded-full" />
-              <div className="flex items-center gap-1.5 min-w-[80px]">
-                {saveStatus === 'saving' ? (
-                  <>
-                    <div className="w-2 h-2 border-2 border-slate-300 border-t-indigo-500 rounded-full animate-spin" />
-                    <span className="text-indigo-600">Saving...</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                    <span className="text-emerald-600 font-bold">Saved ✓</span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="flex items-center justify-between mb-4 px-4 py-2 border-b border-slate-200 bg-white">
+        <button 
+          onClick={goBack} 
+          className="text-blue-700 font-semibold"
+        >
+          ← Back
+        </button>
+
+        <h1 className="text-xl font-bold text-center flex-1">
+          {doc.title}
+        </h1>
 
         <div className="flex items-center gap-2">
+          <input 
+            type="text"
+            value={versionTag}
+            onChange={(e) => setVersionTag(e.target.value)}
+            placeholder="v1.0"
+            className="w-20 px-2 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            title="Version Tag (e.g. v1.0)"
+          />
           <button 
-            onClick={() => setShowLeftPanel(!showLeftPanel)}
-            className={`p-2 rounded-lg transition-colors ${showLeftPanel ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-100'}`}
-            title="Toggle Branches"
+            onClick={() => {
+              if (onSave) {
+                onSave(doc.id, { content, title, author, tags, versionTag });
+                setSaveStatus('saved');
+                setVersionTag('');
+              }
+            }}
+            className="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 transition-colors whitespace-nowrap"
           >
-            <GitBranch className="w-5 h-5" />
-          </button>
-          <button 
-            onClick={() => setShowRightPanel(!showRightPanel)}
-            className={`p-2 rounded-lg transition-colors ${showRightPanel ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-100'}`}
-            title="Toggle History"
-          >
-            <History className="w-5 h-5" />
-          </button>
-          <button 
-            onClick={() => setActivePanel(activePanel === 'audit' ? 'none' : 'audit')}
-            className={`p-2 rounded-lg transition-colors ${activePanel === 'audit' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-100'}`}
-            title="Toggle Audit Log"
-          >
-            <Activity className="w-5 h-5" />
-          </button>
-          <div className="h-6 w-px bg-slate-200 mx-1" />
-          <div className="flex items-center gap-1">
-            <button 
-              onClick={undo}
-              disabled={undoStack.length === 0}
-              className={`p-2 rounded-lg transition-colors ${undoStack.length === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-500 hover:bg-slate-100'}`}
-              title="Undo (Ctrl+Z)"
-            >
-              <Undo className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={redo}
-              disabled={redoStack.length === 0}
-              className={`p-2 rounded-lg transition-colors ${redoStack.length === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-500 hover:bg-slate-100'}`}
-              title="Redo (Ctrl+Y)"
-            >
-              <Redo className="w-5 h-5" />
-            </button>
-          </div>
-          <div className="h-6 w-px bg-slate-200 mx-1" />
-          <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2">
-            <Share2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Share</span>
+            {saveStatus === 'saving' ? 'Saving...' : 'Save ✓'}
           </button>
         </div>
-      </header>
+      </div>
 
       <div className="flex flex-1 overflow-hidden relative">
         {/* Left Panel - BranchPanel */}
@@ -622,10 +576,20 @@ Note: This documnt contains some deliberat typos like "documnt" and "deliberat" 
                 <AuditLog />
               ) : (
                 <VersionTimeline 
+                  versions={doc.branches?.find(b => b.name === 'main')?.versions?.slice().reverse()}
                   onCompare={(v1, v2) => {
                     setCompareVersions({ v1, v2 });
                     setShowCompareView(true);
                   }} 
+                  onRestore={(v) => {
+                    setContent(v.content);
+                    setSaveStatus('saving');
+                  }}
+                  onPreview={(v) => {
+                    // For now, just set content to preview. 
+                    // In a real app, you might want a dedicated preview mode.
+                    setContent(v.content);
+                  }}
                 />
               )}
             </motion.aside>
